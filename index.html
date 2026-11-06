@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f8f5e9">
+<title>Pontonowy Spływ — gra przeglądarkowa</title>
+<meta name="description" content="Wskocz do pontonu, omijaj skały i kłody i sprawdź, jak daleko poniesie Cię nurt.">
+<style>
+:root{color-scheme:light;--paper:#f8f5e9;--ink:#173a32;--muted:#52695b;--line:#dedfd0;--lime:#e7f18f}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,sans-serif}
+button{font:inherit;cursor:pointer}button:focus-visible{outline:3px solid #e89729;outline-offset:4px}
+[hidden]{display:none!important}.shell{width:min(1120px,calc(100% - 56px));margin:auto}
+header{border-bottom:1px solid var(--line)}.top{height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.035em}.brand-icon{width:36px;height:36px;display:grid;place-items:center;background:var(--ink);color:#e9f48b;border-radius:11px}
+.tag{border:1px solid #d6dfba;background:#edf0d5;color:#40563b;border-radius:30px;padding:6px 11px;font-size:10px;font-weight:850;letter-spacing:.12em;white-space:nowrap}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:24px;padding:23px 0 17px}
+.eyebrow{font-size:11px;font-weight:850;letter-spacing:.21em;color:#58734d;margin:0 0 5px}
+h1,h2,p{margin:0}h1{font-size:clamp(39px,6vw,71px);font-weight:950;line-height:.98;letter-spacing:-.075em}
+.lead{max-width:270px;font-size:14px;line-height:1.5;color:var(--muted);padding-bottom:2px}
+.stage{position:relative;isolation:isolate;overflow:hidden;background:#88d6cb;border:2px solid #234c3a;border-radius:25px;height:clamp(380px,58vh,570px);box-shadow:0 5px 0 #244437;touch-action:none;user-select:none}
+canvas{width:100%;height:100%;display:block}.hud{position:absolute;z-index:2;top:16px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.score{min-width:116px;background:#173a32ed;color:#fffbea;border:1px solid #efffd466;border-radius:14px;padding:8px 13px 9px;box-shadow:0 3px 0 #163d3475}
+.score small{font-size:9px;letter-spacing:.17em;color:#d6e9a9;font-weight:850}.score strong{display:block;font-size:27px;line-height:1.08;font-weight:950;font-variant-numeric:tabular-nums}.score span{font-size:15px;color:#e8f398}
+.icon-button,.touch button{display:grid;place-items:center;color:#fffbea;background:#173a32ec;border:1px solid #f5fce1a0;border-radius:13px;box-shadow:0 3px 0 #173a3280;pointer-events:auto;width:46px;height:46px}
+.icon-button:active,.touch button:active{background:#2c5b4e;transform:translateY(2px)}
+.overlay{position:absolute;inset:0;z-index:1;display:grid;place-items:center;padding:14px;background:linear-gradient(180deg,#173a3200 4%,#173a3226 65%,#173a3200 95%)}
+.card{text-align:center;width:min(360px,100%);background:#fff8e6;color:#173a32;border:2px solid #274c3b;border-radius:23px;padding:20px 23px 22px;box-shadow:0 6px 0 #173a326f,0 13px 25px #163e3129}
+.card .eyebrow{font-size:10px;letter-spacing:.17em;margin-bottom:6px}.card h2{font-size:clamp(29px,4vw,40px);line-height:1;letter-spacing:-.055em;font-weight:950;margin-bottom:9px}
+.card p:not(.eyebrow){color:#52695b;font-size:14px;line-height:1.4}.primary{margin-top:15px;padding:10px 22px;min-height:45px;border:2px solid var(--ink);border-radius:12px;color:var(--ink);background:var(--lime);box-shadow:0 4px 0 var(--ink);font-weight:900;display:inline-flex;align-items:center;gap:9px}
+.primary:hover{background:#f0f8ae}.primary:active{box-shadow:0 1px 0 var(--ink);transform:translateY(3px)}
+.touch{position:absolute;z-index:2;bottom:16px;left:15px;right:15px;justify-content:space-between;pointer-events:none;display:none}
+.touch button{width:60px;height:54px}.stage[data-mode="running"] .touch{display:flex}
+@media (hover:hover) and (pointer:fine) and (min-width:641px) and (not (any-pointer:coarse)){.stage[data-mode="running"] .touch{display:none}}
+.legend{padding:17px 0 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+.legend strong{color:var(--ink)}.legend>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+kbd{min-width:26px;padding:2px 6px;text-align:center;background:#fffdf4;border:1px solid #cbd2bf;border-bottom-width:2px;border-radius:5px;color:var(--ink);font:750 13px system-ui}
+.record{white-space:nowrap;font-variant-numeric:tabular-nums}.record svg{color:#5a763d}
+@media (max-width:640px){.shell{width:calc(100% - 24px)}.top{height:48px}.brand{font-size:13px}.brand-icon{width:29px;height:29px;border-radius:9px}.intro{padding:16px 0 13px;display:block}.intro .eyebrow{font-size:9px}.lead{margin-top:6px;font-size:12px;max-width:none}.stage{height:clamp(290px,calc(100svh - 226px),640px);border-radius:17px}.hud{top:10px;left:10px;right:10px}.score{min-width:90px;padding:6px 9px 7px}.score strong{font-size:23px}.legend{font-size:11px;padding:13px 0}.legend>div{gap:5px}.card{width:min(315px,calc(100% - 8px));padding:16px 16px 18px}.card p:not(.eyebrow){font-size:13px}.primary{margin-top:11px}.touch{bottom:11px;left:10px;right:10px}}
+@media (max-height:500px) and (orientation:landscape){.stage{height:calc(100svh - 20px);min-height:260px}}
+</style>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+</head>
+<body>
+<header><div class="shell top">
+<div class="brand"><span class="brand-icon" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M3 8c3.5 0 3.5-3 7-3s3.5 3 7 3c1.7 0 2.7-.7 4-1.5M3 13c3.5 0 3.5-3 7-3s3.5 3 7 3c1.7 0 2.7-.7 4-1.5M3 18c3.5 0 3.5-3 7-3s3.5 3 7 3c1.7 0 2.7-.7 4-1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Rzeczne Przygody</div>
+<span class="tag">GRA PRZEGLĄDARKOWA</span>
+</div></header>
+<main class="shell">
+<div class="intro"><div><p class="eyebrow">NA DZIKIEJ RZECE</p><h1>Pontonowy Spływ</h1></div><p class="lead">Omijaj skały i kłody. Ile metrów uda Ci się przepłynąć? Powodzenia życzy Jaśminka</p></div>
+<section class="stage" id="stage" aria-label="Plansza gry Pontonowy Spływ" data-mode="ready">
+<canvas id="river" aria-hidden="true"></canvas>
+<div class="hud"><div class="score"><small>DYSTANS</small><strong><b id="meters">0</b> <span>m</span></strong></div>
+<button class="icon-button" id="pause" type="button" aria-label="Wstrzymaj spływ" hidden><svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5v14M15 5v14" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></button></div>
+<div class="overlay" id="overlay"><div class="card">
+<p class="eyebrow" id="stateLabel">PRZYGODA CZEKA</p><h2 id="stateTitle">Wskakuj do pontonu!</h2><p id="stateText">Ponton płynie z nurtem. Steruj w lewo i prawo. Jedno zderzenie kończy spływ.</p>
+<button class="primary" id="action" type="button"><svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1.5.9l9-5.5a1 1 0 0 0 0-1.8l-9-5.5a1 1 0 0 0-.5-.1Z" fill="currentColor"/></svg><span id="actionLabel">Rozpocznij spływ</span></button></div></div>
+<div class="touch" id="touch" aria-label="Sterowanie dotykowe">
+<button type="button" data-direction="-1" aria-label="Skręć w lewo"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m0 0 6-6m-6 6 6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button type="button" data-direction="1" aria-label="Skręć w prawo"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+</section>
+<div class="legend">
+<div><strong>Sterowanie</strong> <kbd>←</kbd><kbd>→</kbd><span>lub strzałki na ekranie</span></div>
+<div class="record"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4h8v7a4 4 0 1 1-8 0V4Zm0 2H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 3v5m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><strong>Rekord <span id="record">0</span> m</strong></div>
+</div>
+</main>
+<script>
+'use strict';
+
+const byId = id => document.getElementById(id);
+const canvas = byId('river');
+const ctx = canvas.getContext('2d', {alpha: false});
+const stage = byId('stage');
+const action = byId('action');
+const pauseButton = byId('pause');
+const meters = byId('meters');
+const pressed = new Set();
+const pointers = new Map();
+const turnKeys = {ArrowLeft: -1, a: -1, ArrowRight: 1, d: 1};
+const raftZ = 3;
+const bank = 8.6;
+const laneCenters = [-5.4, 0, 5.4];
+const recordKey = 'pontonowy-splyw-rekord';
+let best = 0;
+try { best = Math.max(0, Number(localStorage.getItem(recordKey)) || 0); } catch {}
+byId('record').textContent = best;
+let mode = 'ready';
+let distance = 0;
+let raftX = 0;
+let lateralSpeed = 0;
+let camera = 0;
+let nextRow = 0;
+let rowIndex = 0;
+let obstacles = [];
+let crashedAt = 0;
+let width, height, focal, horizon;
+let lastFrame = 0;
+
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const river = z => 8 * Math.sin(z / 56) + 3.9 * Math.sin(z / 26);
+function noise(n) {
+  const value = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+function project(x, z) {
+  const inverse = 1 / (z - distance + 11);
+  return {
+    x: width / 2 + (river(z) + x - camera) * focal * inverse,
+    y: horizon + height * 7.25 * inverse,
+    s: focal * inverse
+  };
+}
+function poly(points, fill, stroke, line = 1) {
+  ctx.beginPath();
+  ctx.moveTo(...points[0]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(...points[i]);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = line;
+    ctx.stroke();
+  }
+}
+function ellipse(x, y, rx, ry, color) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+function stroke(color, line, points) {
+  ctx.beginPath();
+  ctx.moveTo(...points[0]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(...points[i]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = line;
+  ctx.stroke();
+}
+function rounded(x, y, w, h, radius, fill, outline, line = 1) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (outline) {
+    ctx.strokeStyle = outline;
+    ctx.lineWidth = line;
+    ctx.stroke();
+  }
+}
+function fillCourse() {
+  while (nextRow < distance + 230) {
+    const row = rowIndex++;
+    const gap = row < 2 ? (row === 0 ? 2 : 0) : Math.floor(noise(row + 6) * 3);
+    const occupied = row === 0 ? [1] : row === 1 ? [2] :
+      [0, 1, 2].filter(lane => lane !== gap && (lane === (gap + 1) % 3 || noise(row + 81) > .35));
+    for (const lane of occupied) {
+      const type = (row + lane) % 2 ? 'rock' : 'log';
+      obstacles.push({z: nextRow, x: laneCenters[lane], type, radius: type === 'rock' ? 1.1 : 1.58});
+    }
+    nextRow += Math.max(13, 22 - nextRow / 120);
+  }
+  while (obstacles.length && obstacles[0].z < distance - 10) obstacles.shift();
+}
+function resetRun() {
+  distance = 0;
+  raftX = 0;
+  lateralSpeed = 0;
+  camera = river(raftZ);
+  nextRow = 24;
+  rowIndex = 0;
+  obstacles = [];
+  meters.textContent = '0';
+  fillCourse();
+}
+function setMode(next, newBest = false) {
+  mode = next;
+  stage.dataset.mode = mode;
+  pressed.clear();
+  pointers.clear();
+  byId('overlay').hidden = mode === 'running';
+  pauseButton.hidden = mode !== 'running';
+  if (mode === 'running') {
+    pauseButton.focus({preventScroll:true});
+    return;
+  }
+  const finished = mode === 'ended';
+  byId('stateLabel').textContent = finished ? (newBest ? 'NOWY REKORD' : 'WYNIK SPŁYWU') : 'CHWILA PRZERWY';
+  byId('stateTitle').textContent = finished ? Math.floor(distance) + ' m' : 'Spływ wstrzymany';
+  byId('stateText').textContent = finished ? 'Zderzenie zakończyło spływ.' : 'Wróć na rzekę, gdy będziesz gotowy.';
+  byId('actionLabel').textContent = finished ? 'Zagraj ponownie' : 'Wznów spływ';
+  action.focus({preventScroll:true});
+}
+function finish() {
+  const score = Math.floor(distance);
+  const newBest = score > best;
+  if (newBest) {
+    best = score;
+    byId('record').textContent = best;
+    try { localStorage.setItem(recordKey, String(best)); } catch {}
+  }
+  crashedAt = performance.now();
+  setMode('ended', newBest);
+}
+function update(dt) {
+  let direction = 0;
+  for (const key of pressed) direction += turnKeys[key];
+  for (const value of pointers.values()) direction += value;
+  const target = Math.sign(direction) * 9;
+  lateralSpeed += (target - lateralSpeed) * (1 - Math.exp(-16 * dt));
+  raftX = clamp(raftX + lateralSpeed * dt, -bank + .9, bank - .9);
+  distance += (7.8 + Math.min(distance / 82, 7.2)) * dt;
+  const targetCamera = river(distance + raftZ) + raftX * .26;
+  camera += (targetCamera - camera) * (1 - Math.exp(-5 * dt));
+  fillCourse();
+  meters.textContent = Math.floor(distance);
+  if (obstacles.some(o => Math.abs(o.z - distance - raftZ) < (o.type === 'rock' ? 1.12 : .78)
+    && Math.abs(river(o.z) + o.x - river(distance + raftZ) - raftX) < o.radius + .64)) finish();
+}
+function sky() {
+  const gradient = ctx.createLinearGradient(0, 0, 0, horizon + 18);
+  gradient.addColorStop(0, '#7dd3df');
+  gradient.addColorStop(1, '#d8f1d2');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  const sun = Math.min(height * .105, 60);
+  ellipse(width * .78, height * .19, sun * 1.17, sun * 1.17, '#fff4bd66');
+  ellipse(width * .78, height * .19, sun, sun, '#fff2ad');
+  for (let i = 0; i < 5; i++) {
+    const x = width * (.065 + i * .228) - camera * .48;
+    const y = height * (.102 + noise(i + 42) * .13);
+    const s = clamp(width / 30, 13, 42) * (.68 + noise(i + 10) * .55);
+    ellipse(x, y, 1.8 * s, .23 * s, '#fffcdfbd');
+    ellipse(x - .42 * s, y - .12 * s, .72 * s, .31 * s, '#fffcdfbd');
+    ellipse(x + .29 * s, y - .19 * s, .61 * s, .36 * s, '#fffcdfbd');
+  }
+  for (let layer = 0; layer < 3; layer++) {
+    const points = [[-24,height],[-24,horizon]];
+    for (let i = -1; i <= 8; i++) {
+      const offset = (i + layer * .38) * width / 7;
+      const peak = horizon - height * (.09 + noise(i + layer * 12 + 7) * .12) * (1 - layer * .17);
+      points.push([offset - width * .075, horizon + 6], [offset, peak], [offset + width * .026, peak - height * .012]);
+    }
+    points.push([width + 24,height]);
+    poly(points, ['#83b7a4', '#70a18e', '#57917b'][layer]);
+  }
+}
+
+function strip(z1, z2, left, right, fill) {
+  const a = project(left, z1);
+  const b = project(right, z1);
+  const c = project(right, z2);
+  const d = project(left, z2);
+  poly([[a.x, a.y], [b.x, b.y], [c.x, c.y + 1], [d.x, d.y + 1]], fill);
+}
+
+function terrain() {
+  const near = distance - .33;
+  const far = distance + 225;
+  const left = [];
+  const right = [];
+  const samples = 115;
+  const land = ctx.createLinearGradient(0, horizon, 0, height);
+  land.addColorStop(0, '#88ba65');
+  land.addColorStop(.58, '#72a54c');
+  land.addColorStop(1, '#427e46');
+  ctx.fillStyle = land;
+  ctx.fillRect(0, horizon + height * 7.25 / (far - distance + 11), width, height);
+  for (let i = samples; i >= 0; i--) {
+    const z = near + (far - near) * Math.pow(i / samples, 1.65);
+    const a = project(-bank, z);
+    const b = project(bank, z);
+    left.push(a);
+    right.push(b);
+  }
+  const riverFill = ctx.createLinearGradient(0, horizon, 0, height);
+  riverFill.addColorStop(0, '#72d8c7');
+  riverFill.addColorStop(.46, '#35bcb4');
+  riverFill.addColorStop(1, '#139b9e');
+  poly([...left.map(p => [p.x,p.y]), ...right.map(p => [p.x,p.y]).reverse()], riverFill);
+  for (const [side, edge] of [[-1,left], [1,right]]) {
+    const outer = edge.map(p => [p.x + side * p.s * .83, p.y]);
+    poly([...edge.map(p => [p.x,p.y]), ...outer.reverse()], '#dbc275');
+    stroke('#d4f09a', 1.5, edge.map(p => [p.x - side * p.s * .04,p.y]));
+  }
+  for (let i = Math.floor(far / 5); i * 5 > near; i--) {
+    const z = i * 5;
+    const drift = z + (distance * .18 % 5);
+    if (drift > far) continue;
+    const x = (noise(i + 91) - .5) * 15;
+    const p = project(x, drift);
+    const wave = (.28 + noise(i + 200)) * p.s;
+    ctx.globalAlpha = .32 + noise(i + 713) * .23;
+    stroke('#e1fff1', Math.max(1, p.s * .095), [[p.x - wave,p.y + p.s * .07], [p.x,p.y - p.s * .04], [p.x + wave,p.y]]);
+    ctx.globalAlpha = 1;
+    if (z - 1 > near) {
+      const side = i % 2 ? -1 : 1;
+      strip(z, z - 1, side * (bank + 1.5), side * (bank + 5 + noise(i) * 9), '#b2cd6b44');
+    }
+  }
+}
+
+function tree(p, size, variant) {
+  const s = p.s * size;
+  const {x, y} = p;
+  ellipse(x + s * .3, y + s * .075, s * .58, s * .15, '#21513e4d');
+  poly([[x - .11*s,y], [x + .12*s,y], [x + .07*s,y - .62*s], [x - .065*s,y - .62*s]], '#794e31');
+  const dark = ['#205d48','#26664c','#37744b'][variant];
+  const light = ['#34875b','#499957','#609c4b'][variant];
+  for (let i = 0; i < 3; i++) {
+    const tip = y - s * (1.07 + i * .39);
+    const span = s * (.62 - i * .145);
+    const base = tip + s * .79;
+    poly([[x,tip], [x+span,base-.12*s], [x+span*.78,base], [x,base+.025*s], [x-span,base-.11*s]], dark);
+    poly([[x,tip+.025*s], [x+span*.11,base-.04*s], [x-span*.86,base-.14*s]], light);
+  }
+}
+function grass(p, variant) {
+  const {x,y,s} = p;
+  ellipse(x, y, s * .62, s * .18, '#355f3d5c');
+  for (let i = -1; i <= 1; i++) {
+    poly([[x - .2*s,y], [x+i*.48*s,y-(.37+.2*noise(variant+i))*s], [x+.3*s,y]], i === 0 ? '#63913d' : '#8fb251');
+  }
+  if (variant % 3 === 0) ellipse(x - .37*s, y - .21*s, s * .10, s * .095, '#f8d880');
+}
+
+function obstacle(o) {
+  const {x, y, s} = project(o.x, o.z);
+  const outline = Math.max(1, s * .085);
+  ellipse(x, y + .1*s, o.radius * 1.2*s, .29*s, '#126e766e');
+  if (o.type === 'rock') {
+    poly([[x-1.07*s,y-.12*s],[x-.88*s,y-.69*s],[x-.35*s,y-1.13*s],[x+.34*s,y-1.18*s],[x+.87*s,y-.73*s],[x+1.08*s,y-.16*s],[x+.48*s,y+.08*s],[x-.49*s,y+.09*s]], '#687a7a', '#334c52', outline);
+    poly([[x-.9*s,y-.65*s],[x-.33*s,y-1.04*s],[x+.33*s,y-1.1*s],[x+.68*s,y-.78*s],[x+.06*s,y-.62*s],[x-.54*s,y-.42*s]], '#a4ae9a');
+    poly([[x+.06*s,y-.62*s],[x+.7*s,y-.77*s],[x+.99*s,y-.19*s],[x+.44*s,y-.01*s],[x+.13*s,y-.08*s]], '#50656c');
+  } else {
+    ctx.save();
+    ctx.translate(x,y-.21*s);
+    ctx.rotate(-.12);
+    rounded(-1.55*s,-.37*s,3.07*s,.71*s,.29*s,'#915435','#4e3931',outline);
+    stroke('#b77747',s*.13,[[-1.33*s,-.16*s],[-.7*s,-.22*s],[.15*s,-.19*s],[1.2*s,-.21*s]]);
+    stroke('#623e30',s*.09,[[-1.25*s,.12*s],[-.42*s,.04*s],[.44*s,.12*s],[1.23*s,.08*s]]);
+    stroke('#4e3931',s*.26,[[.08*s,-.3*s],[.42*s,-.64*s]]);
+    stroke('#b77747',s*.12,[[.08*s,-.35*s],[.4*s,-.63*s]]);
+    ellipse(1.29*s,-.015*s,.30*s,.34*s,'#dba266');
+    ellipse(1.29*s,-.015*s,.19*s,.23*s,'#a96842');
+    ellipse(1.29*s,-.015*s,.12*s,.15*s,'#ebbb7d');
+    ctx.restore();
+  }
+  stroke('#b0edda', Math.max(1, s * .06), [[x-o.radius*s,y+.16*s],[x-.44*s,y+.37*s],[x+.41*s,y+.33*s],[x+o.radius*s,y+.13*s]]);
+}
+
+function raft(time) {
+  const p = project(raftX,distance+raftZ);
+  const s = p.s;
+  const bob = Math.sin(time * 4.4) * .065*s;
+  const {x,y} = p;
+  const visibleWake = mode !== 'ended';
+  if (visibleWake) {
+    for (let i = 0; i < 7; i++) {
+      const life = (time * 1.75 + i * .23) % 1;
+      const side = i % 2 ? -1 : 1;
+      ctx.globalAlpha = (1-life) * .65;
+      ellipse(x+side*(.72+life*.83)*s, y+(.35+life*1.23)*s, (.13+life*.13)*s, (.035+life*.025)*s, '#e1ffea');
+    }
+    ctx.globalAlpha = 1;
+  }
+  ellipse(x, y + .07*s, 1.33*s, .35*s, '#145d6675');
+  ctx.save();
+  ctx.translate(x,y+bob);
+  ctx.rotate(lateralSpeed * .012);
+  const edge = '#623b2a';
+  ctx.lineJoin = 'round';
+  const w = Math.max(1.25,.073*s);
+  poly([[-1.22*s,-.12*s],[-1.04*s,-.48*s],[-.73*s,-.78*s],[.72*s,-.78*s],[1.05*s,-.48*s],[1.22*s,-.12*s],[1.02*s,.26*s],[.68*s,.38*s],[-.68*s,.38*s],[-1.02*s,.26*s]], '#ce5f31', edge,w);
+  poly([[-1.19*s,-.22*s],[-1.04*s,-.58*s],[-.73*s,-.88*s],[.72*s,-.88*s],[1.05*s,-.58*s],[1.19*s,-.22*s],[1.02*s,.1*s],[.65*s,.24*s],[-.65*s,.24*s],[-1.02*s,.1*s]], '#ff9a42',edge,w);
+  poly([[-.74*s,-.33*s],[-.48*s,-.68*s],[.47*s,-.68*s],[.75*s,-.33*s],[.59*s,-.055*s],[-.59*s,-.055*s]], '#a85235','#7c4630',w*.7);
+  stroke('#ffca6d',w*.83,[[-1.01*s,-.36*s],[-.85*s,-.59*s],[-.65*s,-.75*s]]);
+  stroke('#ffca6d',w*.83,[[1.01*s,-.36*s],[.85*s,-.59*s],[.65*s,-.75*s]]);
+  stroke('#ffc875',w*.77,[[-.61*s,.13*s],[.62*s,.13*s]]);
+  const paddle = Math.sin(time*6) * .1 + lateralSpeed * .021;
+  ctx.save();
+  ctx.rotate(paddle);
+  stroke('#75482e',s*.105,[[-1.46*s,-.44*s],[1.40*s,-.82*s]]);
+  poly([[-1.71*s,-.37*s],[-1.38*s,-.42*s],[-1.37*s,-.54*s],[-1.74*s,-.52*s]], '#ffe2a2',edge,w*.65);
+  poly([[1.35*s,-.76*s],[1.74*s,-.81*s],[1.75*s,-.98*s],[1.35*s,-.89*s]], '#ffe2a2',edge,w*.65);
+  ctx.restore();
+  rounded(-.38*s,-.96*s,.76*s,.68*s,.22*s,'#165c56','#284b40',w);
+  stroke('#e8a87a',s*.15,[[-.32*s,-.81*s],[-.57*s,-.68*s],[-.68*s,-.60*s]]);
+  stroke('#e8a87a',s*.15,[[.32*s,-.81*s],[.55*s,-.68*s],[.66*s,-.65*s]]);
+  rounded(-.29*s,-.87*s,.58*s,.42*s,.1*s,'#fbe075','#786344',w*.6);
+  stroke('#b67139',s*.045,[[0,-.85*s],[0,-.47*s]]);
+  ellipse(0,-1.01*s,.25*s,.25*s,'#b77554');
+  ellipse(0,-1.125*s,.31*s,.23*s,'#284b40');
+  ellipse(0,-1.157*s,.27*s,.20*s,'#ffe47e');
+  stroke('#fff3ad',s*.06,[[-.15*s,-1.24*s],[.09*s,-1.27*s]]);
+  ctx.restore();
+  if (mode === 'ended') {
+    const age = (performance.now() - crashedAt) / 1000;
+    if (age < .65) {
+      ctx.globalAlpha = 1 - age/.65;
+      for (let i = 0; i < 13; i++) {
+        const side = i % 2 ? -1 : 1;
+        const dx = side * (.25 + age * (1 + noise(i + 50) * 4));
+        const dy = age * (4 + noise(i + 83) * 4) - 6 * age * age;
+        ellipse(x + dx*s,y - dy*s,.095*s,.12*s,'#e2fff0');
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function draw(time) {
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  sky();
+  terrain();
+  const objects = [];
+  const last = Math.floor((distance + 200) / 5);
+  for (let i = Math.floor(distance / 5); i <= last; i++) {
+    for (const side of [-1,1]) {
+      const seed = i * 2 + Number(side === 1);
+      const z = i*5 + noise(seed + 125)*4.7;
+      if (z < distance - .32) continue;
+      objects.push({z, side, seed});
+    }
+  }
+  for (const item of obstacles) {
+    if (item.z > distance - .33 && item.z < distance + 220) objects.push(item);
+  }
+  objects.push({z: distance + raftZ, player:true});
+  objects.sort((a,b) => b.z-a.z || Number(Boolean(a.player))-Number(Boolean(b.player)));
+  for (const item of objects) {
+    if (item.player) {
+      raft(time);
+    } else if (item.type) {
+      obstacle(item);
+    } else {
+      const {z,side,seed} = item;
+      const p = project(side * (bank + 2 + noise(seed + 5) * 9), z);
+      if (p.x > -p.s*5 && p.x < width+p.s*5) tree(p, 1.65 + noise(seed + 14) * 1.5, seed % 3);
+      grass(project(side * (bank + .95 + noise(seed + 23) * 2.2), z), seed);
+    }
+  }
+}
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  width = rect.width;
+  height = rect.height;
+  canvas.width = Math.max(1,Math.round(width * ratio));
+  canvas.height = Math.max(1,Math.round(height * ratio));
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  focal = Math.min(height * 1.02, width * .69);
+  horizon = height * .35;
+}
+function frame(now) {
+  const dt = Math.min((now - (lastFrame || now)) / 1000, .05);
+  lastFrame = now;
+  if (mode === 'running') update(dt);
+  draw(mode === 'paused' || mode === 'ended' ? distance * .12 : now / 1000);
+  requestAnimationFrame(frame);
+}
+function togglePause() {
+  if (mode === 'running') setMode('paused');
+  else if (mode === 'paused') setMode('running');
+}
+
+action.addEventListener('click', () => {
+  if (mode !== 'paused') resetRun();
+  setMode('running');
+});
+pauseButton.addEventListener('click', togglePause);
+window.addEventListener('keydown', event => {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  if (key === 'Escape') {
+    if (!event.repeat) togglePause();
+    return;
+  }
+  if (mode === 'running' && Object.hasOwn(turnKeys,key)) {
+    event.preventDefault();
+    pressed.add(key);
+  }
+});
+window.addEventListener('keyup', event => pressed.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key));
+for (const button of byId('touch').querySelectorAll('button')) {
+  button.addEventListener('pointerdown', event => {
+    if (mode !== 'running' || event.button !== 0) return;
+    event.preventDefault();
+    button.setPointerCapture(event.pointerId);
+    pointers.set(event.pointerId, Number(button.dataset.direction));
+  });
+  for (const name of ['pointerup','pointercancel','lostpointercapture']) {
+    button.addEventListener(name, event => pointers.delete(event.pointerId));
+  }
+}
+window.addEventListener('blur', () => {
+  if (mode === 'running') setMode('paused');
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && mode === 'running') setMode('paused');
+});
+resetRun();
+resize();
+new ResizeObserver(resize).observe(canvas);
+requestAnimationFrame(frame);
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(error => {
+    console.warn('Nie udało się uruchomić trybu offline.', error);
+  });
+}
+</script>
+</body>
+</html>
