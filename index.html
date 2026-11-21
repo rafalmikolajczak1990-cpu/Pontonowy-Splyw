@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f8f5e9">
 <title>Pontonowy Spływ — gra przeglądarkowa</title>
-<meta name="description" content="Wskocz do pontonu, omijaj i przeskakuj skały oraz kłody, zbieraj monety i odblokuj łódkę oraz statek.">
+<meta name="description" content="Wskocz do pontonu, omijaj i przeskakuj skały oraz kłody, zbieraj monety i odblokuj łódkę, statek oraz statek kosmiczny.">
 <style>
 :root{color-scheme:light;--paper:#f8f5e9;--ink:#173a32;--muted:#52695b;--line:#dedfd0;--lime:#e7f18f;--gold:#f7c548}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,sans-serif}
@@ -38,16 +38,20 @@ canvas{width:100%;height:100%;display:block}.hud{position:absolute;z-index:2;top
 .primary:active,.secondary:active{box-shadow:0 1px 0 var(--ink);transform:translateY(3px)}
 .run-summary{margin-top:10px;padding:7px 12px;border-radius:11px;background:#f3ebd2;border:1px solid #dfd3b0;font-size:13px;font-weight:800;color:#2c4d3e;display:inline-flex;align-items:center;gap:6px}
 
-.shop-card{width:min(520px,100%);text-align:left;padding:16px 18px 18px}
+.shop-card{width:min(540px,100%);text-align:left;padding:16px 18px 18px}
 .shop-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e3dac0}
 .shop-head h2{font-size:24px;margin:0}
 .wallet-pill{display:inline-flex;align-items:center;gap:6px;background:#173a32;color:#ffe48f;padding:6px 11px;border-radius:99px;font-weight:900;font-size:14px;font-variant-numeric:tabular-nums}
-.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:270px;overflow-y:auto;padding-right:2px}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:285px;overflow-y:auto;padding-right:2px}
 .craft-item{background:#fffdf6;border:2px solid #d5ceb7;border-radius:15px;padding:10px 11px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:border-color .15s,background .15s}
+.craft-item.super-item{grid-column:1 / -1;background:linear-gradient(135deg,#f6f3ff 0%,#eef9ff 100%);border-color:#53489e}
 .craft-item.selected{border-color:#173a32;background:#f2f8d8}
+.craft-item.super-item.selected{border-color:#3a2f85;background:linear-gradient(135deg,#ebe5ff 0%,#e2f6e9 100%)}
 .craft-top{display:flex;align-items:center;gap:9px}
 .craft-icon{width:42px;height:42px;border-radius:11px;background:#dff4ee;border:1px solid #b8dcd2;display:grid;place-items:center;flex-shrink:0}
-.craft-title{font-size:14px;font-weight:900;line-height:1.15;color:var(--ink)}
+.craft-item.super-item .craft-icon{background:#231d4f;border-color:#695cc9}
+.craft-title{font-size:14px;font-weight:900;line-height:1.15;color:var(--ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.super-badge{font-size:9px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:99px;background:#3c2f96;color:#ffe97d}
 .craft-perk{font-size:11px;line-height:1.3;color:var(--muted);margin-top:2px}
 .craft-btn{width:100%;min-height:34px;border-radius:9px;border:1.5px solid var(--ink);font-size:12px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:5px;background:#fff8e2;color:var(--ink);box-shadow:0 2px 0 var(--ink)}
 .craft-btn.buy{background:var(--gold)}
@@ -56,8 +60,7 @@ canvas{width:100%;height:100%;display:block}.hud{position:absolute;z-index:2;top
 .shop-foot{margin-top:12px;display:flex;justify-content:flex-end}
 
 .touch{position:absolute;z-index:2;bottom:16px;left:15px;right:15px;justify-content:space-between;align-items:center;pointer-events:none;display:none}
-.touch button{width:60px;height:54px}
-.touch button.jump-touch{width:68px;height:58px;background:#23584bec;border-color:#e9f48b}
+.touch button{width:64px;height:56px}
 .stage[data-mode="running"] .touch{display:flex}
 @media (hover:hover) and (pointer:fine) and (min-width:641px) and (not (any-pointer:coarse)){.stage[data-mode="running"] .touch{display:none}}
 .legend{padding:17px 0 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
@@ -71,7 +74,7 @@ kbd{min-width:26px;padding:2px 6px;text-align:center;background:#fffdf4;border:1
   .hud-left{gap:6px}.score{min-width:84px;padding:6px 9px 7px}.score strong{font-size:21px}.score.coins-hud{min-width:74px}
   .legend{font-size:11px;padding:12px 0}.legend>div{gap:5px}
   .card{width:min(335px,calc(100% - 6px));padding:15px 15px 17px}.card p:not(.eyebrow){font-size:13px}
-  .shop-card{width:100%;padding:13px 13px 14px}.shop-grid{grid-template-columns:1fr;max-height:215px}
+  .shop-card{width:100%;padding:13px 13px 14px}.shop-grid{grid-template-columns:1fr;max-height:225px}
   .touch{bottom:11px;left:10px;right:10px}
 }
 @media (max-height:500px) and (orientation:landscape){.stage{height:calc(100svh - 20px);min-height:260px}}
@@ -100,7 +103,7 @@ kbd{min-width:26px;padding:2px 6px;text-align:center;background:#fffdf4;border:1
   <div class="card" id="mainCard">
     <p class="eyebrow" id="stateLabel">PRZYGODA CZEKA</p>
     <h2 id="stateTitle">Wskakuj do pontonu!</h2>
-    <p id="stateText">Steruj na boki, przeskakuj skały i kłody oraz zbieraj monety na ulepszenia.</p>
+    <p id="stateText">Steruj na boki, naciśnij ekran (lub Spację), aby skoczyć, i zbieraj monety na ulepszenia.</p>
     <div class="run-summary" id="runSummary" hidden><i class="coin-dot" aria-hidden="true">M</i><span id="runCoinsText">+0 monet w tym spływie</span></div>
     <div class="card-actions">
       <button class="primary" id="action" type="button"><svg width="15" height="15" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 3.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1.5.9l9-5.5a1 1 0 0 0 0-1.8l-9-5.5a1 1 0 0 0-.5-.1Z" fill="currentColor"/></svg><span id="actionLabel">Rozpocznij spływ</span></button>
@@ -124,12 +127,11 @@ kbd{min-width:26px;padding:2px 6px;text-align:center;background:#fffdf4;border:1
 </div>
 <div class="touch" id="touch" aria-label="Sterowanie dotykowe">
   <button type="button" data-direction="-1" aria-label="Skręć w lewo"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m0 0 6-6m-6 6 6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <button type="button" class="jump-touch" id="jumpTouch" aria-label="Skok nad przeszkodą"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5m0 0-6 6m6-6 6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button type="button" data-direction="1" aria-label="Skręć w prawo"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </div>
 </section>
 <div class="legend">
-<div><strong>Sterowanie</strong> <kbd>←</kbd><kbd>→</kbd> skręt · <kbd>Spacja</kbd> / <kbd>↑</kbd> skok</div>
+<div><strong>Sterowanie</strong> <kbd>←</kbd><kbd>→</kbd> skręt · <kbd>Spacja</kbd> / kliknięcie ekranu — skok</div>
 <div class="record"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 4h8v7a4 4 0 1 1-8 0V4Zm0 2H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 3v5m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><strong>Rekord <span id="record">0</span> m</strong></div>
 </div>
 </main>
@@ -171,7 +173,7 @@ const CRAFTS = [
   {
     id: 'sport_raft',
     name: 'Nowy Ponton',
-    price: 25,
+    price: 125,
     perk: 'Sportowy · +15% zwrotności',
     steer: 10.4,
     jump: 13.8,
@@ -181,7 +183,7 @@ const CRAFTS = [
   {
     id: 'boat',
     name: 'Łódka',
-    price: 60,
+    price: 300,
     perk: '+20% zwrotności · +12% skok',
     steer: 10.9,
     jump: 15.0,
@@ -191,12 +193,23 @@ const CRAFTS = [
   {
     id: 'ship',
     name: 'Statek',
-    price: 120,
+    price: 600,
     perk: '+25% zwrotności · wyższy skok · magnes monet',
     steer: 11.4,
     jump: 15.8,
     magnet: 1.75,
     icon: `<svg width="28" height="28" viewBox="0 0 32 32"><path d="M16 4 L26 14 L24 26 L8 26 L6 14 Z" fill="#1e4466" stroke="#102538" stroke-width="2"/><rect x="11" y="13" width="10" height="9" rx="2" fill="#f7f9fc" stroke="#102538" stroke-width="1.5"/><rect x="14" y="8" width="4" height="5" fill="#d64541"/></svg>`
+  },
+  {
+    id: 'spaceship',
+    name: 'Statek Kosmiczny',
+    superUnit: true,
+    price: 2000,
+    perk: 'Ultra zwrotny (+40%) · mega skok · super magnes monet',
+    steer: 12.6,
+    jump: 17.2,
+    magnet: 2.6,
+    icon: `<svg width="28" height="28" viewBox="0 0 32 32"><path d="M16 3 L22 12 L27 21 L21 24 L11 24 L5 21 L10 12 Z" fill="#e6ecf8" stroke="#7c8ce0" stroke-width="1.8"/><ellipse cx="16" cy="14" rx="4" ry="5" fill="#44e5ff"/><path d="M12 24 L16 30 L20 24 Z" fill="#ff8c3b"/></svg>`
   }
 ];
 
@@ -323,20 +336,20 @@ function rounded(x, y, w, h, radius, fill, outline, line = 1) {
   }
 }
 
-function spawnSplash(x, z, count = 10) {
+function spawnSplash(x, z, count = 10, isSpace = false) {
   for (let i = 0; i < count; i++) {
     const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
     const speed = 1.4 + Math.random() * 2.5;
     particles.push({
       x,
       z,
-      y: 0.15,
+      y: isSpace ? 0.35 : 0.15,
       vx: Math.cos(angle) * speed,
       vy: 2.5 + Math.random() * 3.0,
       vz: Math.sin(angle) * speed,
       life: 0.45 + Math.random() * 0.2,
       maxLife: 0.65,
-      color: i % 2 ? '#e2fff2' : '#ffffff',
+      color: isSpace ? (i % 2 ? '#5df2ff' : '#c29bff') : (i % 2 ? '#e2fff2' : '#ffffff'),
       size: 0.11 + Math.random() * 0.06
     });
   }
@@ -388,7 +401,6 @@ function fillCourse() {
 
     const step = Math.max(13.5, 22 - nextRow / 125);
 
-    // Monety na wolnym torze
     if (Math.random() < 0.68) {
       const count = Math.random() < 0.45 ? 2 : 1;
       for (let c = 0; c < count; c++) {
@@ -401,7 +413,6 @@ function fillCourse() {
       }
     }
 
-    // Bonusowa moneta zawieszona nad przeszkodą (zachęca do przeskakiwania)
     if (occupied.length && Math.random() < 0.48) {
       const jumpLane = occupied[Math.floor(Math.random() * occupied.length)];
       coins.push({
@@ -412,7 +423,6 @@ function fillCourse() {
       });
     }
 
-    // Dodatkowa losowa moneta pomiędzy rzędami
     if (Math.random() < 0.42) {
       const midLane = Math.floor(Math.random() * 3);
       coins.push({
@@ -464,7 +474,7 @@ function renderShop() {
     const canAfford = totalCoins >= craft.price;
 
     const item = document.createElement('div');
-    item.className = 'craft-item' + (selected ? ' selected' : '');
+    item.className = 'craft-item' + (craft.superUnit ? ' super-item' : '') + (selected ? ' selected' : '');
 
     let btnHtml = '';
     if (selected) {
@@ -475,11 +485,13 @@ function renderShop() {
       btnHtml = `<button type="button" class="craft-btn buy" data-buy="${craft.id}" ${canAfford ? '' : 'disabled'}><i class="coin-dot" aria-hidden="true">M</i><span>Kup · ${craft.price}</span></button>`;
     }
 
+    const badge = craft.superUnit ? `<span class="super-badge">Super jednostka</span>` : '';
+
     item.innerHTML = `
       <div class="craft-top">
         <div class="craft-icon" aria-hidden="true">${craft.icon}</div>
         <div>
-          <div class="craft-title">${craft.name}</div>
+          <div class="craft-title">${craft.name} ${badge}</div>
           <div class="craft-perk">${craft.perk}</div>
         </div>
       </div>
@@ -578,6 +590,7 @@ function finish() {
 
 function update(dt) {
   const craft = currentCraft();
+  const isSpace = craft.id === 'spaceship';
   let direction = 0;
   for (const key of pressed) direction += turnKeys[key];
   for (const value of pointers.values()) direction += value;
@@ -590,7 +603,7 @@ function update(dt) {
   if (jumpBuffer > 0 && raftY <= 0.001) {
     raftVy = craft.jump;
     jumpBuffer = 0;
-    spawnSplash(raftX, distance + raftZ, 8);
+    spawnSplash(raftX, distance + raftZ, 8, isSpace);
   }
 
   if (raftY > 0 || raftVy > 0) {
@@ -600,7 +613,7 @@ function update(dt) {
     if (raftY <= 0) {
       raftY = 0;
       raftVy = 0;
-      if (wasAirborne) spawnSplash(raftX, distance + raftZ, 12);
+      if (wasAirborne) spawnSplash(raftX, distance + raftZ, 12, isSpace);
     }
   }
 
@@ -614,14 +627,13 @@ function update(dt) {
   const playerZ = distance + raftZ;
   const playerWorldX = river(playerZ) + raftX;
 
-  // Zbieranie monet
   for (const c of coins) {
     if (c.collected) continue;
     const dz = Math.abs(c.z - playerZ);
     const dx = Math.abs(river(c.z) + c.x - playerWorldX);
     const heightMatch = c.air
-      ? (raftY > (craft.magnet > 1.3 ? 0.15 : 0.42))
-      : (raftY < 1.35);
+      ? (raftY > (craft.magnet > 2.2 ? 0.0 : (craft.magnet > 1.3 ? 0.15 : 0.42)))
+      : (raftY < 1.55);
 
     if (dz < 1.05 * craft.magnet && dx < 1.15 * craft.magnet && heightMatch) {
       c.collected = true;
@@ -633,7 +645,6 @@ function update(dt) {
     }
   }
 
-  // Aktualizacja cząsteczek
   for (let i = particles.length - 1; i >= 0; i--) {
     const pt = particles[i];
     pt.x += pt.vx * dt;
@@ -644,7 +655,6 @@ function update(dt) {
     if (pt.life <= 0) particles.splice(i, 1);
   }
 
-  // Kolizja z przeszkodami (z uwzględnieniem wysokości skoku)
   const hitObstacle = obstacles.some(o => {
     const clearance = o.type === 'rock' ? 0.72 : 0.52;
     if (raftY >= clearance) return false;
@@ -838,7 +848,6 @@ function drawClassicOrSportRaft(time, s, w, edge, sport) {
   stroke(highlightColor, w * .77, [[-.61*s,.13*s],[.62*s,.13*s]]);
 
   if (sport) {
-    // Sportowy dziób wzmacniający
     poly([[-.68*s,-.78*s],[0,-.98*s],[.68*s,-.78*s],[.45*s,-.68*s],[-.45*s,-.68*s]], '#183f37', edge, w * .7);
   }
 
@@ -864,17 +873,12 @@ function drawClassicOrSportRaft(time, s, w, edge, sport) {
 
 function drawBoat(s, w) {
   const hullEdge = '#472616';
-  // Kadłub drewniano-kremowy
   poly([[-1.08*s,-.12*s],[-.86*s,-.68*s],[0,-1.16*s],[.86*s,-.68*s],[1.08*s,-.12*s],[.84*s,.32*s],[-.84*s,.32*s]], '#8c4a27', hullEdge, w);
   poly([[-.94*s,-.18*s],[-.74*s,-.64*s],[0,-1.05*s],[.74*s,-.64*s],[.94*s,-.18*s],[.72*s,.22*s],[-.72*s,.22*s]], '#fff5dc', hullEdge, w * .8);
-  // Pokład dziobowy z mahoniu
   poly([[-.68*s,-.62*s],[0,-1.02*s],[.68*s,-.62*s],[.52*s,-.45*s],[-.52*s,-.45*s]], '#b56334', hullEdge, w * .65);
-  // Szyba przednia
   poly([[-.58*s,-.46*s],[-.48*s,-.66*s],[.48*s,-.66*s],[.58*s,-.46*s]], '#66c7c2', '#1f4e4d', w * .75);
   stroke('#d9fffc', w * .6, [[-.38*s,-.59*s],[.15*s,-.59*s]]);
-  // Silnik na rufie
   rounded(-.24*s,.12*s,.48*s,.34*s,.09*s,'#2b3d42','#152226',w * .8);
-  // Sternik
   rounded(-.30*s,-.42*s,.60*s,.46*s,.14*s,'#1e6478','#173a32',w * .8);
   ellipse(0,-.56*s,.22*s,.22*s,'#b77554');
   ellipse(0,-.68*s,.28*s,.16*s,'#ffffff');
@@ -882,19 +886,13 @@ function drawBoat(s, w) {
 
 function drawShip(time, s, w) {
   const hullEdge = '#102538';
-  // Kadłub statku
   poly([[-1.26*s,-.06*s],[-1.02*s,-.76*s],[0,-1.34*s],[1.02*s,-.76*s],[1.26*s,-.06*s],[1.02*s,.38*s],[-1.02*s,.38*s]], '#1e4466', hullEdge, w);
-  // Czerwony pas linii wodnej
   poly([[-1.18*s,.08*s],[1.18*s,.08*s],[1.04*s,.34*s],[-1.04*s,.34*s]], '#d64541', hullEdge, w * .7);
-  // Biały pokład
   poly([[-1.08*s,-.14*s],[-.88*s,-.72*s],[0,-1.22*s],[.88*s,-.72*s],[1.08*s,-.14*s],[.86*s,.16*s],[-.86*s,.16*s]], '#f7f9fc', hullEdge, w * .8);
-  // Nadbudówka / mostek kapitański
   rounded(-.64*s,-.78*s,1.28*s,.68*s,.16*s,'#ffffff','#1e4466',w * .85);
   rounded(-.50*s,-.68*s,1.00*s,.24*s,.07*s,'#49a6c2','#102538',w * .7);
-  // Koło ratunkowe na burcie
   ellipse(-.82*s,-.24*s,.18*s,.18*s,'#ff6347');
   ellipse(-.82*s,-.24*s,.08*s,.08*s,'#ffffff');
-  // Komin i dymek
   rounded(-.18*s,-1.08*s,.36*s,.34*s,.07*s,'#d64541','#102538',w * .8);
   rounded(-.20*s,-1.12*s,.40*s,.10*s,.04*s,'#1e4466','#102538',w * .6);
   const puff = (time * 1.6) % 1;
@@ -903,36 +901,70 @@ function drawShip(time, s, w) {
   ctx.globalAlpha = 1;
 }
 
-function raft(time) {
-  const groundP = project(raftX, distance + raftZ, 0);
-  const p = project(raftX, distance + raftZ, raftY);
-  const s = p.s;
-  const bob = raftY > 0 ? 0 : Math.sin(time * 4.4) * .065 * s;
-  const {x, y} = p;
-  const craft = currentCraft();
+function drawSpaceship(time, s, w) {
+  const hullEdge = '#241b52';
+  const flicker = 0.85 + Math.sin(time * 28) * 0.15;
 
-  // Kilwater na wodzie (tylko gdy jednostka płynie po wodzie)
+  // Płomienie silników odrzutowych
+  poly([[-.52*s,.26*s],[-.36*s,(.68*flicker)*s],[-.20*s,.26*s]], '#ff7b29');
+  poly([[.20*s,.26*s],[.36*s,(.68*flicker)*s],[.52*s,.26*s]], '#ff7b29');
+  poly([[-.44*s,.26*s],[-.36*s,(.52*flicker)*s],[-.28*s,.26*s]], '#fff199');
+  poly([[.28*s,.26*s],[.36*s,(.52*flicker)*s],[.44*s,.26*s]], '#fff199');
+
+  // Skrzydła delta
+  poly([[-1.42*s,.12*s],[-.56*s,-.62*s],[0,-1.38*s],[.56*s,-.62*s],[1.42*s,.12*s],[.86*s,.28*s],[-.86*s,.28*s]], '#46389c', hullEdge, w);
+  // Srebrno-biały kadłub główny
+  poly([[-.82*s,.22*s],[-.52*s,-.76*s],[0,-1.44*s],[.52*s,-.76*s],[.82*s,.22*s],[.52*s,.32*s],[-.52*s,.32*s]], '#eef3fc', hullEdge, w);
+  // Boczne gondole silnikowe
+  rounded(-1.26*s,-.16*s,.28*s,.44*s,.09*s,'#7366d4',hullEdge,w * .75);
+  rounded(.98*s,-.16*s,.28*s,.44*s,.09*s,'#7366d4',hullEdge,w * .75);
+  // Neonowe paski na skrzydłach
+  stroke('#4ef2ff', w * .9, [[-1.16*s,.06*s],[-.62*s,-.42*s]]);
+  stroke('#4ef2ff', w * .9, [[1.16*s,.06*s],[.62*s,-.42*s]]);
+  // Kopuła kokpitu
+  ellipse(0,-.62*s,.32*s,.42*s,'#1e2959');
+  ellipse(0,-.64*s,.26*s,.35*s,'#3fe8ff');
+  ellipse(-.08*s,-.74*s,.09*s,.14*s,'#d9ffff');
+}
+
+function raft(time) {
+  const craft = currentCraft();
+  const isSpace = craft.id === 'spaceship';
+  const hoverOffset = isSpace ? (0.28 + Math.sin(time * 5.2) * 0.06) : 0;
+  const groundP = project(raftX, distance + raftZ, 0);
+  const p = project(raftX, distance + raftZ, raftY + hoverOffset);
+  const s = p.s;
+  const bob = (raftY > 0 || isSpace) ? 0 : Math.sin(time * 4.4) * .065 * s;
+  const {x, y} = p;
+
   const visibleWake = mode !== 'ended' && raftY < 0.08;
   if (visibleWake) {
-    const wakeCount = craft.id === 'boat' || craft.id === 'ship' ? 9 : 7;
-    for (let i = 0; i < wakeCount; i++) {
-      const life = (time * 1.75 + i * .21) % 1;
-      const side = i % 2 ? -1 : 1;
-      ctx.globalAlpha = (1 - life) * .65;
-      ellipse(
-        groundP.x + side * (.72 + life * .88) * s,
-        groundP.y + (.35 + life * 1.25) * s,
-        (.13 + life * .14) * s,
-        (.035 + life * .025) * s,
-        '#e1ffea'
-      );
+    if (isSpace) {
+      // Antygrawitacyjna fala plazmowa na wodzie
+      const pulse = (time * 2.2) % 1;
+      ctx.globalAlpha = (1 - pulse) * 0.65;
+      ellipse(groundP.x, groundP.y + 0.07 * s, (0.8 + pulse * 0.9) * s, (0.22 + pulse * 0.22) * s, '#5cf4ff');
+      ctx.globalAlpha = 1;
+    } else {
+      const wakeCount = craft.id === 'boat' || craft.id === 'ship' ? 9 : 7;
+      for (let i = 0; i < wakeCount; i++) {
+        const life = (time * 1.75 + i * .21) % 1;
+        const side = i % 2 ? -1 : 1;
+        ctx.globalAlpha = (1 - life) * .65;
+        ellipse(
+          groundP.x + side * (.72 + life * .88) * s,
+          groundP.y + (.35 + life * 1.25) * s,
+          (.13 + life * .14) * s,
+          (.035 + life * .025) * s,
+          '#e1ffea'
+        );
+      }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
   }
 
-  // Cień na powierzchni wody (skaluje się podczas skoku)
-  const shadowScale = Math.max(0.42, 1 - raftY * 0.19);
-  ellipse(groundP.x, groundP.y + .07 * s, 1.33 * s * shadowScale, .35 * s * shadowScale, '#145d6675');
+  const shadowScale = Math.max(0.42, 1 - (raftY + hoverOffset * 0.6) * 0.19);
+  ellipse(groundP.x, groundP.y + .07 * s, 1.33 * s * shadowScale, .35 * s * shadowScale, isSpace ? '#192a5666' : '#145d6675');
 
   ctx.save();
   ctx.translate(x, y + bob);
@@ -945,6 +977,8 @@ function raft(time) {
     drawBoat(s, w);
   } else if (craft.id === 'ship') {
     drawShip(time, s, w);
+  } else if (craft.id === 'spaceship') {
+    drawSpaceship(time, s, w);
   } else {
     drawClassicOrSportRaft(time, s, w, edge, craft.id === 'sport_raft');
   }
@@ -1076,8 +1110,10 @@ for (const button of byId('touch').querySelectorAll('button[data-direction]')) {
   }
 }
 
-byId('jumpTouch').addEventListener('pointerdown', event => {
-  if (mode !== 'running' || event.button !== 0) return;
+// Skok po naciśnięciu ekranu gry (poza przyciskami HUD/skrętów)
+stage.addEventListener('pointerdown', event => {
+  if (mode !== 'running') return;
+  if (event.target.closest('button')) return;
   event.preventDefault();
   triggerJump();
 });

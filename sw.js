@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const scope = new URL(self.registration.scope);
 const cachePrefix = 'pontonowy-splyw:' + scope.pathname + ':';
 const cacheName = cachePrefix + CACHE_VERSION;
